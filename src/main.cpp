@@ -32,6 +32,88 @@ struct
     uint32_t mintime;
 } stat = { 0,0,0,0,0,0,0,0, 0, 9999};
 
+void display(float value){
+  MFS.write(value,1);
+}
+
+void readSensor() {
+  // READ DATA
+  Serial.print("DHT22, \t");
+  uint32_t start = micros();
+  int chk = DHT.read22(DHT22_PIN);
+  uint32_t stop = micros();
+
+  switch (chk)
+  {
+    case DHTLIB_OK:
+      stat.ok++;
+      Serial.print("OK,\t");
+      break;
+    case DHTLIB_ERROR_CHECKSUM:
+      stat.crc_error++;
+      Serial.print("Checksum error,\t");
+      break;
+    case DHTLIB_ERROR_TIMEOUT:
+      stat.time_out++;
+      Serial.print("Time out error,\t");
+      break;
+    case DHTLIB_ERROR_CONNECT:
+      stat.connect++;
+      Serial.print("Connect error,\t");
+      break;
+    case DHTLIB_ERROR_ACK_L:
+      stat.ack_l++;
+      Serial.print("Ack Low error,\t");
+      break;
+    case DHTLIB_ERROR_ACK_H:
+      stat.ack_h++;
+      Serial.print("Ack High error,\t");
+      break;
+    default:
+      stat.unknown++;
+      Serial.print("Unknown error,\t");
+      break;
+  }
+  // DISPLAY DATA
+  Serial.print(DHT.humidity, 1);
+  Serial.print(",\t");
+  Serial.print(DHT.temperature, 1);
+  Serial.print(",\t");
+  uint32_t duration = stop - start;
+  stat.sumtime += duration;
+  stat.mintime = min(stat.mintime, duration);
+  Serial.print(duration);
+  Serial.println();
+
+  if (stat.total % 20 == 0)
+  {
+    Serial.println("\nTOT\tOK\tCRC\tTIMO\tCON\tACKL\tACKH\tAVG\MIN");
+    Serial.print(stat.total);
+    Serial.print("\t");
+    Serial.print(stat.ok);
+    Serial.print("\t");
+    Serial.print(stat.crc_error);
+    Serial.print("\t");
+    Serial.print(stat.time_out);
+    Serial.print("\t");
+    Serial.print(stat.connect);
+    Serial.print("\t");
+    Serial.print(stat.ack_l);
+    Serial.print("\t");
+    Serial.print(stat.ack_h);
+    Serial.print("\t");
+    Serial.print(stat.unknown);
+    Serial.print("\t");
+    Serial.print(1.0 * stat.sumtime / stat.total);
+    Serial.print("\t");
+    Serial.print(1.0 * stat.mintime);
+    Serial.println("\n");
+
+    toggle=!toggle; 
+
+  }
+}
+
 void setup()
 {
     Serial.begin(115200);
@@ -63,87 +145,25 @@ void setup()
 
 void loop()
 {
-    // READ DATA
-    Serial.print("DHT22, \t");
+  if (stat.total % 2 == 0) {
+    readSensor();
+  }
 
-    uint32_t start = micros();
-    int chk = DHT.read22(DHT22_PIN);
-    uint32_t stop = micros();
+  stat.total++;
 
-    stat.total++;
-    switch (chk)
-    {
-    case DHTLIB_OK:
-        stat.ok++;
-        Serial.print("OK,\t");
-        break;
-    case DHTLIB_ERROR_CHECKSUM:
-        stat.crc_error++;
-        Serial.print("Checksum error,\t");
-        break;
-    case DHTLIB_ERROR_TIMEOUT:
-        stat.time_out++;
-        Serial.print("Time out error,\t");
-        break;
-    case DHTLIB_ERROR_CONNECT:
-        stat.connect++;
-        Serial.print("Connect error,\t");
-        break;
-    case DHTLIB_ERROR_ACK_L:
-        stat.ack_l++;
-        Serial.print("Ack Low error,\t");
-        break;
-    case DHTLIB_ERROR_ACK_H:
-        stat.ack_h++;
-        Serial.print("Ack High error,\t");
-        break;
-    default:
-        stat.unknown++;
-        Serial.print("Unknown error,\t");
-        break;
-    }
-    // DISPLAY DATA
-    Serial.print(DHT.humidity, 1);
-    Serial.print(",\t");
-    Serial.print(DHT.temperature, 1);
-    Serial.print(",\t");
-    uint32_t duration = stop - start;
-    stat.sumtime += duration;
-    stat.mintime = min(stat.mintime, duration);
-    Serial.print(duration);
-    Serial.println();
+  if(toggle)
+    display(DHT.temperature);
+  else
+    display(DHT.humidity);
 
-    if (stat.total % 20 == 0)
-    {
-        Serial.println("\nTOT\tOK\tCRC\tTIMO\tCON\tACKL\tACKH\tAVG\MIN");
-        Serial.print(stat.total);
-        Serial.print("\t");
-        Serial.print(stat.ok);
-        Serial.print("\t");
-        Serial.print(stat.crc_error);
-        Serial.print("\t");
-        Serial.print(stat.time_out);
-        Serial.print("\t");
-        Serial.print(stat.connect);
-        Serial.print("\t");
-        Serial.print(stat.ack_l);
-        Serial.print("\t");
-        Serial.print(stat.ack_h);
-        Serial.print("\t");
-        Serial.print(stat.unknown);
-        Serial.print("\t");
-        Serial.print(1.0 * stat.sumtime / stat.total);
-        Serial.print("\t");
-        Serial.print(1.0 * stat.mintime);
-        Serial.println("\n");
-        toggle=!toggle;
-    }
+  byte btn = MFS.getButton();
 
-    if(toggle)
-      MFS.write(DHT.temperature,2);
-    else
-      MFS.write(DHT.humidity,2);
-    delay(500);
+  if (btn == BUTTON_1_PRESSED || btn == BUTTON_1_LONG_PRESSED) {
+    toggle=!toggle; 
+  }
+
+  delay(500);
+
 }
 //
 // END OF FILE
