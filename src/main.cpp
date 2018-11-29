@@ -36,13 +36,14 @@ void display(float value){
   MFS.write(value,1);
 }
 
-void readSensor() {
-  // READ DATA
-  Serial.print("DHT22, \t");
-  uint32_t start = micros();
-  int chk = DHT.read22(DHT22_PIN);
-  uint32_t stop = micros();
+void displaySensorData() {
+  if(toggle)
+    display(DHT.temperature);
+  else
+    display(DHT.humidity);
+}
 
+void printChecksum(int chk){
   switch (chk)
   {
     case DHTLIB_OK:
@@ -74,6 +75,9 @@ void readSensor() {
       Serial.print("Unknown error,\t");
       break;
   }
+}
+
+void printSensorData(uint32_t start, uint32_t stop){
   // DISPLAY DATA
   Serial.print(DHT.humidity, 1);
   Serial.print(",\t");
@@ -84,8 +88,10 @@ void readSensor() {
   stat.mintime = min(stat.mintime, duration);
   Serial.print(duration);
   Serial.println();
+}
 
-  if (stat.total % 20 == 0)
+void printTotal(){
+  if (stat.total % 100 == 0)
   {
     Serial.println("\nTOT\tOK\tCRC\tTIMO\tCON\tACKL\tACKH\tAVG\MIN");
     Serial.print(stat.total);
@@ -114,11 +120,24 @@ void readSensor() {
   }
 }
 
+void printSensorData() {
+
+  // READ DATA
+  Serial.print("DHT22, \t");
+  uint32_t start = micros();
+  int chk = DHT.read22(DHT22_PIN);
+  uint32_t stop = micros();
+
+  printChecksum(chk);
+  printSensorData(start,stop);
+  printTotal();
+
+}
+
 void setup()
 {
     Serial.begin(115200);
     delay(10);
-
     Serial.println();
     Serial.println("==============================");
     Serial.println("======  DHT22 MFS TEST  ======");
@@ -145,16 +164,14 @@ void setup()
 
 void loop()
 {
-  if (stat.total % 2 == 0) {
-    readSensor();
-  }
-
+  
   stat.total++;
 
-  if(toggle)
-    display(DHT.temperature);
-  else
-    display(DHT.humidity);
+  // read sensor data to ~1sec speed
+  if (stat.total % 10 == 0) {
+    printSensorData();
+    displaySensorData();
+  }
 
   byte btn = MFS.getButton();
 
@@ -162,7 +179,7 @@ void loop()
     toggle=!toggle; 
   }
 
-  delay(500);
+  delay(100);
 
 }
 //
