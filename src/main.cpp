@@ -1,20 +1,20 @@
-//
-//    FILE: dht22_test_noIRQ.ino
-//  AUTHOR: Rob Tillaart
-// VERSION: 0.1.0
+//  AUTHOR: Rob Tillaart & MFS version: @hpsaturn
+// VERSION: 0.1.2
 // PURPOSE: DHT library test sketch for DHT22 && Arduino
 //     URL:
 // HISTORY:
 // 0.1.0 initial version
+// 0.1.2 Multi functional Shield support
 //
 // Released to the public domain
-//
+
 #include <TimerOne.h>
 #include <Wire.h>
 #include <MultiFuncShield.h>
 #include <dht.h>
 
 dht DHT;
+bool toggle;
 
 #define DHT22_PIN 9
 
@@ -35,8 +35,8 @@ struct
 void setup()
 {
     Serial.begin(115200);
-    Serial.println("dht22_test.ino");
-    Serial.print("LIBRARY VERSION: ");
+    Serial.println("dht22_test");
+    Serial.print("DHTLIB LIBRARY VERSION: ");
     Serial.println(DHT_LIB_VERSION);
     Serial.println();
     
@@ -46,9 +46,11 @@ void setup()
     Serial.print("IRQ:\t");
     Serial.println( DHT.getDisableIRQ() );
 
+    Serial.print("Starting Multi Function Shield..");
     Timer1.initialize();
     MFS.initialize(&Timer1);    // initialize multifunction shield library
     MFS.write(0);
+    Serial.println("done.");
 
     Serial.println("Type,\tstatus,\tHumidity (%),\tTemperature (C)\tTime (us)");
 }
@@ -96,7 +98,6 @@ void loop()
     }
     // DISPLAY DATA
     Serial.print(DHT.humidity, 1);
-    MFS.write(DHT.temperature,2);
     Serial.print(",\t");
     Serial.print(DHT.temperature, 1);
     Serial.print(",\t");
@@ -129,7 +130,13 @@ void loop()
         Serial.print("\t");
         Serial.print(1.0 * stat.mintime);
         Serial.println("\n");
+        toggle=!toggle;
     }
+
+    if(toggle)
+      MFS.write(DHT.temperature,2);
+    else
+      MFS.write(DHT.humidity,2);
     delay(500);
 }
 //
