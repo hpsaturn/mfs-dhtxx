@@ -35,22 +35,28 @@ struct
 void setup()
 {
     Serial.begin(115200);
-    Serial.println("dht22_test");
-    Serial.print("DHTLIB LIBRARY VERSION: ");
-    Serial.println(DHT_LIB_VERSION);
-    Serial.println();
-    
-    Serial.print("IRQ:\t");
-    Serial.println( DHT.getDisableIRQ() );
-    DHT.setDisableIRQ(true);
-    Serial.print("IRQ:\t");
-    Serial.println( DHT.getDisableIRQ() );
+    delay(10);
 
-    Serial.print("Starting Multi Function Shield..");
+    Serial.println();
+    Serial.println("==============================");
+    Serial.println("======  DHT22 MFS TEST  ======");
+    Serial.println("==============================");
+
     Timer1.initialize();
     MFS.initialize(&Timer1);    // initialize multifunction shield library
     MFS.write(0);
-    Serial.println("done.");
+    Serial.println("== Multi Function Shield ready");
+
+    Serial.print("== DHTLIB version: ");
+    Serial.println(DHT_LIB_VERSION);
+    Serial.println("==============================");
+    
+    Serial.print("--> IRQ:\t");
+    Serial.println( DHT.getDisableIRQ() );
+    DHT.setDisableIRQ(true);
+    Serial.print("--> IRQ:\t");
+    Serial.println( DHT.getDisableIRQ() );
+    Serial.println();
 
     Serial.println("Type,\tstatus,\tHumidity (%),\tTemperature (C)\tTime (us)");
 }
