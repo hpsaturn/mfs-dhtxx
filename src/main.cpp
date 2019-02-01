@@ -33,7 +33,7 @@ struct
 } stat = { 0,0,0,0,0,0,0,0, 0, 9999};
 
 void display(float value){
-  MFS.write(value,1);
+  MFS.write(value);
 }
 
 void displaySensorData() {
